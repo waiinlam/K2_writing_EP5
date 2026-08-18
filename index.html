@@ -5,20 +5,46 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
     <title>小朋友滑滑梯練運筆:捺</title>
     <style>
+        /* 防誤觸與全局設定 */
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
         body { background-color: #f0f8ff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
-        #game-container { position: relative; width: 100%; max-width: 900px; aspect-ratio: 4 / 3; background-color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; touch-action: none; }
+        
+        #game-container { 
+            position: relative; width: 100%; max-width: 900px; aspect-ratio: 4 / 3; 
+            background-color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2); 
+            border-radius: 20px; overflow: hidden; touch-action: none;
+        }
+
         .layer-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        
+        /* 滑梯縮放設定：縮小至 0.6 並放置於草地上 */
+        #slide { 
+            width: 60%; 
+            left: 20%;  
+            top: 20%;   
+            transform: scale(0.6); 
+            transform-origin: top center;
+        }
+
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        
         #stars-container { position: absolute; top: 15px; left: 20px; font-size: 40px; color: #ccc; z-index: 10; text-shadow: 2px 2px 0 #fff; }
         .star-active { color: #FFD700; }
-        #target-glow { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; transform: translate(-50%, -50%); animation: pulse 1s infinite alternate; z-index: 5; }
+
+        #target-glow { 
+            position: absolute; width: 60px; height: 60px; border-radius: 50%; 
+            background: rgba(255, 215, 0, 0.4); border: 4px solid #FFD700; 
+            transform: translate(-50%, -50%); animation: pulse 1s infinite alternate; z-index: 5; 
+        }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
+        /* 小朋友角色放大 1.5 倍 (80px * 1.5 = 120px) 於起點準備 */
         #player { 
-            position: absolute; width: 100px; height: 100px; transform: translate(-50%, -50%); 
+            position: absolute; width: 120px; height: 120px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.15));
         }
+
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
         #overlay.show { opacity: 1; pointer-events: auto; }
         #message { font-size: 60px; color: #FF5722; font-weight: bold; text-shadow: 3px 3px 0px #FFC107; }
@@ -42,47 +68,49 @@
 </div>
 
 <script>
+    // 完美配合滑梯彎曲弧度的「捺」形軌跡設定
     const config = {
-        // 五頁對應的 PNG 小朋友素材
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.25, startY: 0.20, endX: 0.75, endY: 0.80, hitRadius: 60
+        startX: 0.38, startY: 0.23, // 滑梯頂端起點
+        ctrlX:  0.48, ctrlY:  0.45, // 調整後的彎曲控制點 (完美配合滑梯弧度)
+        endX:   0.62, endY:   0.62, // 滑梯底部終點
+        hitRadius: 55
     };
 
-    let currentLevel = 0;
-    let isDragging = false;
-    let starsEarned = 0;
-
+    let currentLevel = 0, isDragging = false, starsEarned = 0;
     const container = document.getElementById('game-container');
-    const guideCanvas = document.getElementById('guide-canvas');
-    const drawCanvas = document.getElementById('draw-canvas');
-    const guideCtx = guideCanvas.getContext('2d');
-    const drawCtx = drawCanvas.getContext('2d');
-    const player = document.getElementById('player');
-    const targetGlow = document.getElementById('target-glow');
-    const overlay = document.getElementById('overlay');
-    const replayBtn = document.getElementById('btn-replay');
-    const starsContainer = document.getElementById('stars-container');
+    const guideCanvas = document.getElementById('guide-canvas'), drawCanvas = document.getElementById('draw-canvas');
+    const guideCtx = guideCanvas.getContext('2d'), drawCtx = drawCanvas.getContext('2d');
+    const player = document.getElementById('player'), targetGlow = document.getElementById('target-glow');
+    const overlay = document.getElementById('overlay'), replayBtn = document.getElementById('btn-replay'), starsContainer = document.getElementById('stars-container');
 
-    let startPx = {x: 0, y: 0}, endPx = {x: 0, y: 0};
+    let startPx = {x: 0, y: 0}, ctrlPx = {x: 0, y: 0}, endPx = {x: 0, y: 0};
     
     function resizeAndInit() {
         const rect = container.getBoundingClientRect();
         guideCanvas.width = rect.width; guideCanvas.height = rect.height;
         drawCanvas.width = rect.width; drawCanvas.height = rect.height;
+        
         startPx = {x: rect.width * config.startX, y: rect.height * config.startY};
-        endPx = {x: rect.width * config.endX, y: rect.height * config.endY};
-        targetGlow.style.left = `${endPx.x}px`; targetGlow.style.top = `${endPx.y}px`;
+        ctrlPx  = {x: rect.width * config.ctrlX,  y: rect.height * config.ctrlY};
+        endPx   = {x: rect.width * config.endX,   y: rect.height * config.endY};
+
+        targetGlow.style.left = `${endPx.x}px`;
+        targetGlow.style.top = `${endPx.y}px`;
+
         drawGuidePath();
         resetPlayer();
     }
 
+    // 繪製沿著滑梯完美弧度的半透明安全引導線
     function drawGuidePath() {
         guideCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
         guideCtx.beginPath();
         guideCtx.moveTo(startPx.x, startPx.y);
-        guideCtx.lineTo(endPx.x, endPx.y);
-        guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        guideCtx.lineWidth = 60; guideCtx.lineCap = 'round';
+        guideCtx.quadraticCurveTo(ctrlPx.x, ctrlPx.y, endPx.x, endPx.y);
+        guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.5)';
+        guideCtx.lineWidth = 50; 
+        guideCtx.lineCap = 'round';
         guideCtx.stroke();
     }
 
@@ -93,6 +121,7 @@
         overlay.classList.remove('show');
     }
 
+    // 將小朋友置於起點準備
     function resetPlayer() {
         player.style.left = `${startPx.x}px`;
         player.style.top = `${startPx.y}px`;
@@ -114,18 +143,31 @@
         if (!isDragging) return;
         const rect = container.getBoundingClientRect();
         let curX = e.clientX - rect.left, curY = e.clientY - rect.top;
-        player.style.left = `${curX}px`; player.style.top = `${curY}px`;
+        
+        player.style.left = `${curX}px`; 
+        player.style.top = `${curY}px`;
+
+        // 即時畫出運筆實線
         drawCtx.lineTo(curX, curY);
-        drawCtx.strokeStyle = '#FF5722'; drawCtx.lineWidth = 20; drawCtx.lineCap = 'round';
+        drawCtx.strokeStyle = '#FF5722'; 
+        drawCtx.lineWidth = 16; 
+        drawCtx.lineCap = 'round';
+        drawCtx.lineJoin = 'round';
         drawCtx.stroke();
-        drawCtx.beginPath(); drawCtx.moveTo(curX, curY);
-        if (Math.hypot(endPx.x - curX, endPx.y - curY) < config.hitRadius) winLevel();
+        drawCtx.beginPath(); 
+        drawCtx.moveTo(curX, curY);
+
+        if (Math.hypot(endPx.x - curX, endPx.y - curY) < config.hitRadius) {
+            winLevel();
+        }
     });
 
     player.addEventListener('pointerup', () => {
         if (!isDragging) return;
         isDragging = false;
-        if (Math.hypot(endPx.x - parseFloat(player.style.left), endPx.y - parseFloat(player.style.top)) >= config.hitRadius) {
+        
+        const currentDist = Math.hypot(endPx.x - parseFloat(player.style.left), endPx.y - parseFloat(player.style.top));
+        if (currentDist >= config.hitRadius) {
             resetPlayer();
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         }
@@ -136,6 +178,7 @@
         if(starsEarned < currentLevel + 1) starsEarned++;
         updateStars();
         overlay.classList.add('show');
+        
         if (currentLevel < 4) {
             setTimeout(() => { currentLevel++; loadLevel(); }, 2000);
         } else {
@@ -143,24 +186,9 @@
         }
     }
 
-    replayBtn.addEventListener('click', () => {
-        currentLevel = 0;
-        starsEarned = 0;
-        updateStars();
-        replayBtn.style.display = 'none';
-        loadLevel();
-    });
-
-    window.addEventListener('resize', () => {
-        resizeAndInit();
-        if(!isDragging) resetPlayer();
-    });
-
-    window.onload = () => {
-        resizeAndInit();
-        updateStars();
-        loadLevel();
-    };
+    replayBtn.addEventListener('click', () => { location.reload(); });
+    window.addEventListener('resize', resizeAndInit);
+    window.onload = () => { resizeAndInit(); updateStars(); loadLevel(); };
 </script>
 </body>
 </html>
