@@ -3,175 +3,38 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
-    <title>小朋友滑滑梯練運筆: 捺</title>
+    <title>小朋友滑滑梯練運筆:捺</title>
     <style>
-        /* 基礎重置與防誤觸設定 */
-        * {
-            box-sizing: border-box;
-            margin: 0;
-            padding: 0;
-            /* 鎖定滑動與長按選取，專為 K2 小朋友設計的防干擾 */
-            user-select: none;
-            -webkit-user-select: none;
-            -webkit-touch-callout: none;
-        }
-
-        body {
-            background-color: #f0f8ff;
-            display: flex;
-            justify-content: center;
-            align-items: center;
-            height: 100vh;
-            overflow: hidden;
-            font-family: 'Comic Sans MS', 'PingFang HK', 'Microsoft JhengHei', sans-serif;
-        }
-
-        /* 遊戲容器：自適應並維持比例 */
-        #game-container {
-            position: relative;
-            width: 100%;
-            max-width: 900px;
-            aspect-ratio: 4 / 3;
-            background-color: #fff;
-            box-shadow: 0 10px 30px rgba(0,0,0,0.2);
-            border-radius: 20px;
-            overflow: hidden;
-            touch-action: none; /* 關鍵：防止瀏覽器原生滑動 */
-        }
-
-        /* 圖片層 (背景與滑梯) */
-        .layer-img {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            object-fit: cover;
-            pointer-events: none; /* 不干擾點擊 */
-        }
-
-        /* 畫布層 (安全道路與畫線) */
-        canvas {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            pointer-events: none;
-        }
-
-        /* 星星進度條 */
-        #stars-container {
-            position: absolute;
-            top: 15px;
-            left: 20px;
-            font-size: 40px;
-            color: #ccc;
-            text-shadow: 2px 2px 0 #fff;
-            z-index: 10;
-        }
+        * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
+        body { background-color: #f0f8ff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        #game-container { position: relative; width: 100%; max-width: 900px; aspect-ratio: 4 / 3; background-color: #fff; box-shadow: 0 10px 30px rgba(0,0,0,0.2); border-radius: 20px; overflow: hidden; touch-action: none; }
+        .layer-img { position: absolute; top: 0; left: 0; width: 100%; height: 100%; object-fit: cover; pointer-events: none; }
+        canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
+        #stars-container { position: absolute; top: 15px; left: 20px; font-size: 40px; color: #ccc; z-index: 10; text-shadow: 2px 2px 0 #fff; }
         .star-active { color: #FFD700; }
-
-        /* 終點：黃色閃爍光圈 */
-        #target-glow {
-            position: absolute;
-            width: 80px;
-            height: 80px;
-            border-radius: 50%;
-            background: rgba(255, 215, 0, 0.5);
-            border: 4px solid #FFD700;
-            transform: translate(-50%, -50%);
-            animation: pulse 1s infinite alternate;
-            pointer-events: none;
-            z-index: 5;
-        }
-
-        @keyframes pulse {
-            0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; box-shadow: 0 0 10px #FFD700; }
-            100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; box-shadow: 0 0 30px #FFD700; }
-        }
-
-        /* 小朋友角色 (可拖曳) */
-        #player {
-            position: absolute;
-            width: 100px;
-            height: 100px;
-            transform: translate(-50%, -50%);
-            cursor: grab;
-            z-index: 20;
-            touch-action: none;
-            /* 預設背景色供測試，加入真實去背圖片後會覆蓋 */
-            background-color: transparent; 
-            object-fit: contain;
-        }
-        #player:active { cursor: grabbing; }
-
-        /* 全螢幕獎勵動畫與按鈕 */
-        #overlay {
-            position: absolute;
-            top: 0;
-            left: 0;
-            width: 100%;
-            height: 100%;
-            background: rgba(255, 255, 255, 0.9);
-            display: flex;
-            flex-direction: column;
-            justify-content: center;
-            align-items: center;
-            z-index: 50;
-            opacity: 0;
-            pointer-events: none;
-            transition: opacity 0.5s ease;
-        }
-        #overlay.show {
-            opacity: 1;
-            pointer-events: auto;
-        }
-        #message {
-            font-size: 60px;
-            color: #FF5722;
-            font-weight: bold;
-            text-shadow: 3px 3px 0px #FFC107;
-            transform: scale(0.5);
-            transition: transform 0.5s cubic-bezier(0.175, 0.885, 0.32, 1.275);
-        }
-        #overlay.show #message {
-            transform: scale(1);
-        }
+        #target-glow { position: absolute; width: 80px; height: 80px; border-radius: 50%; background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; transform: translate(-50%, -50%); animation: pulse 1s infinite alternate; z-index: 5; }
+        @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        #btn-replay {
-            margin-top: 40px;
-            padding: 15px 40px;
-            font-size: 30px;
-            font-weight: bold;
-            color: white;
-            background-color: #4CAF50;
-            border: none;
-            border-radius: 50px;
-            box-shadow: 0 5px 15px rgba(0,0,0,0.2);
-            cursor: pointer;
-            display: none;
+        #player { 
+            position: absolute; width: 100px; height: 100px; transform: translate(-50%, -50%); 
+            cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
         }
-        #btn-replay:active { transform: scale(0.95); }
+        #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
+        #overlay.show { opacity: 1; pointer-events: auto; }
+        #message { font-size: 60px; color: #FF5722; font-weight: bold; text-shadow: 3px 3px 0px #FFC107; }
+        #btn-replay { margin-top: 40px; padding: 15px 40px; font-size: 30px; font-weight: bold; background-color: #4CAF50; color: white; border: none; border-radius: 50px; cursor: pointer; display: none; box-shadow: 0 5px 15px rgba(0,0,0,0.2); }
     </style>
 </head>
 <body>
 
 <div id="game-container">
-    <!-- 背景層 -->
     <img id="bg" class="layer-img" src="11.png" alt="背景">
-    <img id="slide" class="layer-img" src="13.png" alt="滑梯">
-
-    <!-- 畫布層：引導線與玩家畫的線 -->
+    <img id="slide" class="layer-img" src="13new.png" alt="滑梯">
     <canvas id="guide-canvas"></canvas>
     <canvas id="draw-canvas"></canvas>
-
-    <!-- UI與互動元素 -->
     <div id="stars-container">★ ★ ★ ★ ★</div>
     <div id="target-glow"></div>
-    <img id="player" src="14.png" alt="小朋友" draggable="false">
-
-    <!-- 獎勵層 -->
+    <img id="player" src="boy.png" alt="小朋友" draggable="false">
     <div id="overlay">
         <div id="message">✨ 你真努力！</div>
         <button id="btn-replay">再玩一次</button>
@@ -179,23 +42,16 @@
 </div>
 
 <script>
-    // 遊戲設定檔
     const config = {
-        // 5 個頁面的小朋友素材順序
-        levels: ['14.png', '15.png', '16.png', '14.png', '15.png'],
-        // 捺 (右斜下) 的座標設定 (以容器寬高的百分比表示)
-        startX: 0.25, // 起點 X 25%
-        startY: 0.20, // 起點 Y 20%
-        endX: 0.75,   // 終點 X 75%
-        endY: 0.80,   // 終點 Y 80%
-        hitRadius: 60 // 終點判定半徑 (px)
+        // 五頁對應的 PNG 小朋友素材
+        levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
+        startX: 0.25, startY: 0.20, endX: 0.75, endY: 0.80, hitRadius: 60
     };
 
     let currentLevel = 0;
     let isDragging = false;
     let starsEarned = 0;
 
-    // DOM 元素
     const container = document.getElementById('game-container');
     const guideCanvas = document.getElementById('guide-canvas');
     const drawCanvas = document.getElementById('draw-canvas');
@@ -207,81 +63,48 @@
     const replayBtn = document.getElementById('btn-replay');
     const starsContainer = document.getElementById('stars-container');
 
-    // 實際像素座標
-    let startPx = {x: 0, y: 0};
-    let endPx = {x: 0, y: 0};
+    let startPx = {x: 0, y: 0}, endPx = {x: 0, y: 0};
     
-    // 初始化畫布與座標
     function resizeAndInit() {
         const rect = container.getBoundingClientRect();
-        
-        // 設定 Canvas 解析度與容器相同
-        guideCanvas.width = rect.width;
-        guideCanvas.height = rect.height;
-        drawCanvas.width = rect.width;
-        drawCanvas.height = rect.height;
-
-        // 計算實際起終點像素座標
-        startPx.x = rect.width * config.startX;
-        startPx.y = rect.height * config.startY;
-        endPx.x = rect.width * config.endX;
-        endPx.y = rect.height * config.endY;
-
-        // 設定終點光圈位置
-        targetGlow.style.left = `${endPx.x}px`;
-        targetGlow.style.top = `${endPx.y}px`;
-
+        guideCanvas.width = rect.width; guideCanvas.height = rect.height;
+        drawCanvas.width = rect.width; drawCanvas.height = rect.height;
+        startPx = {x: rect.width * config.startX, y: rect.height * config.startY};
+        endPx = {x: rect.width * config.endX, y: rect.height * config.endY};
+        targetGlow.style.left = `${endPx.x}px`; targetGlow.style.top = `${endPx.y}px`;
         drawGuidePath();
         resetPlayer();
     }
 
-    // 繪製半透明安全道路 (引導)
     function drawGuidePath() {
         guideCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
         guideCtx.beginPath();
         guideCtx.moveTo(startPx.x, startPx.y);
         guideCtx.lineTo(endPx.x, endPx.y);
-        guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)'; // 半透明白色道路
-        guideCtx.lineWidth = 60; // 粗安全範圍
-        guideCtx.lineCap = 'round';
+        guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
+        guideCtx.lineWidth = 60; guideCtx.lineCap = 'round';
         guideCtx.stroke();
     }
 
-    // 關卡初始化
     function loadLevel() {
-        // 更新小朋友圖片
         player.src = config.levels[currentLevel];
         drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         resetPlayer();
         overlay.classList.remove('show');
-        isDragging = false;
     }
 
-    // 重置小朋友位置到起點
     function resetPlayer() {
         player.style.left = `${startPx.x}px`;
         player.style.top = `${startPx.y}px`;
     }
 
-    // 更新星星 UI
     function updateStars() {
-        let starsHTML = '';
-        for (let i = 0; i < 5; i++) {
-            if (i < starsEarned) {
-                starsHTML += '<span class="star-active">★</span> ';
-            } else {
-                starsHTML += '<span>★</span> ';
-            }
-        }
-        starsContainer.innerHTML = starsHTML;
+        starsContainer.innerHTML = Array(5).fill(0).map((_, i) => i < starsEarned ? '<span class="star-active">★</span> ' : '<span>★</span> ').join('');
     }
 
-    // --- Pointer Events 互動邏輯 ---
     player.addEventListener('pointerdown', (e) => {
         isDragging = true;
         player.setPointerCapture(e.pointerId);
-        
-        // 點擊時清空上次未完成的畫線
         drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         drawCtx.beginPath();
         drawCtx.moveTo(startPx.x, startPx.y);
@@ -289,69 +112,37 @@
 
     player.addEventListener('pointermove', (e) => {
         if (!isDragging) return;
-
-        // 取得相對於容器的座標
         const rect = container.getBoundingClientRect();
-        let currentX = e.clientX - rect.left;
-        let currentY = e.clientY - rect.top;
-
-        // 移動角色圖片
-        player.style.left = `${currentX}px`;
-        player.style.top = `${currentY}px`;
-
-        // 畫出粗實線
-        drawCtx.lineTo(currentX, currentY);
-        drawCtx.strokeStyle = '#FF5722'; // 亮橘色粗線
-        drawCtx.lineWidth = 20;
-        drawCtx.lineCap = 'round';
-        drawCtx.lineJoin = 'round';
+        let curX = e.clientX - rect.left, curY = e.clientY - rect.top;
+        player.style.left = `${curX}px`; player.style.top = `${curY}px`;
+        drawCtx.lineTo(curX, curY);
+        drawCtx.strokeStyle = '#FF5722'; drawCtx.lineWidth = 20; drawCtx.lineCap = 'round';
         drawCtx.stroke();
-        drawCtx.beginPath();
-        drawCtx.moveTo(currentX, currentY);
-
-        // 檢查是否抵達終點
-        const dist = Math.hypot(endPx.x - currentX, endPx.y - currentY);
-        if (dist < config.hitRadius) {
-            winLevel();
-        }
+        drawCtx.beginPath(); drawCtx.moveTo(curX, curY);
+        if (Math.hypot(endPx.x - curX, endPx.y - curY) < config.hitRadius) winLevel();
     });
 
-    player.addEventListener('pointerup', (e) => {
+    player.addEventListener('pointerup', () => {
         if (!isDragging) return;
         isDragging = false;
-        player.releasePointerCapture(e.pointerId);
-
-        // K2 防挫敗設計：如果中途放手，讓小朋友吸回起點重來
-        const dist = Math.hypot(endPx.x - parseFloat(player.style.left), endPx.y - parseFloat(player.style.top));
-        if (dist >= config.hitRadius) {
+        if (Math.hypot(endPx.x - parseFloat(player.style.left), endPx.y - parseFloat(player.style.top)) >= config.hitRadius) {
             resetPlayer();
             drawCtx.clearRect(0, 0, drawCanvas.width, drawCanvas.height);
         }
     });
 
-    // 成功完成該頁
     function winLevel() {
         isDragging = false;
-        starsEarned++;
+        if(starsEarned < currentLevel + 1) starsEarned++;
         updateStars();
-        
         overlay.classList.add('show');
-        
         if (currentLevel < 4) {
-            // 進入下一頁
-            setTimeout(() => {
-                currentLevel++;
-                loadLevel();
-            }, 2000);
+            setTimeout(() => { currentLevel++; loadLevel(); }, 2000);
         } else {
-            // 5 頁全部完成
-            setTimeout(() => {
-                replayBtn.style.display = 'block';
-            }, 1000);
+            setTimeout(() => { replayBtn.style.display = 'block'; }, 1000);
         }
     }
 
-    // 再玩一次按鈕
     replayBtn.addEventListener('click', () => {
         currentLevel = 0;
         starsEarned = 0;
@@ -360,13 +151,11 @@
         loadLevel();
     });
 
-    // 監聽視窗縮放以保持坐標正確
     window.addEventListener('resize', () => {
         resizeAndInit();
         if(!isDragging) resetPlayer();
     });
 
-    // 初始啟動
     window.onload = () => {
         resizeAndInit();
         updateStars();
