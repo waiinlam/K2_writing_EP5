@@ -38,7 +38,7 @@
         #stars-container { position: absolute; top: 20px; left: 20px; font-size: 36px; color: #ddd; z-index: 10; text-shadow: 2px 2px 0 #333; }
         .star-active { color: #FFD700; }
 
-        /* 終點黃色閃爍光圈：精準對齊滑梯右下角末端出口 */
+        /* 終點黃色閃爍光圈：精確延伸至滑梯出口右下方的草地上 */
         #target-glow { 
             position: absolute; width: 55px; height: 55px; border-radius: 50%; 
             background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; 
@@ -46,7 +46,7 @@
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖放大 200%，精準放在滑梯頂部起點 */
+        /* 小朋友圖放大 200%（完美坐喺滑道起點） */
         #player { 
             position: absolute; width: 190px; height: 190px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
@@ -76,14 +76,14 @@
 </div>
 
 <script>
-    // 修正後的「捺」形軌跡：起點上移並對準滑梯頂部滑道，順著弧度延伸至右下角滑梯末端
+    // 終極修正軌跡：起點維持在小朋友現時坐住嘅位置，終點與引導曲線完美延伸至右下方草地
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.43, startY: 0.61, // 滑梯頂部滑道起點
-        ctrlX:  0.52, ctrlY:  0.72, // 完美貼合滑梯弧度的控制點
-        endX:   0.61, endY:   0.84, // 滑梯右下角末端出口終點
+        startX: 0.44, startY: 0.67, // 小朋友現時坐住嘅起點
+        ctrlX:  0.55, ctrlY:  0.78, // 配合滑道弧度並向右下方延伸的控制點
+        endX:   0.68, endY:   0.90, // 延伸落滑梯出口右下方草地的終點
         hitRadius: 45,
-        allowedDeviation: 30 
+        allowedDeviation: 32 
     };
 
     let currentLevel = 0, isDragging = false, starsEarned = 0;
@@ -111,7 +111,7 @@
         resetPlayer();
     }
 
-    // 繪製緊貼滑道、呈優美「捺」形的半透明引導通道
+    // 繪製由左上滑道一直延伸落右下草地的優美「捺」形引導通道
     function drawGuidePath() {
         guideCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
         guideCtx.beginPath();
@@ -220,3 +220,4 @@
 </script>
 </body>
 </html>
+
