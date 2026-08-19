@@ -6,20 +6,25 @@
     <title>小朋友滑滑梯練運筆:捺</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        body { background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif; }
+        body { background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif; }
         
+        /* 鎖定黃金比例 (1414x2000)，無論 iPad 橫向定直向，都完美置中且絕不移位 */
         #game-container { 
-            position: absolute; 
-            top: 0; left: 0; 
-            width: 100vw; height: 100vh; 
-            background-color: #fff; 
-            overflow: hidden; 
+            position: relative;
+            width: 100vw;
+            height: 100vh;
+            max-width: calc(100vh * (1414 / 2000));
+            max-height: calc(100vw * (2000 / 1414));
+            aspect-ratio: 1414 / 2000;
+            background-color: #fff;
+            overflow: hidden;
             touch-action: none;
+            box-shadow: 0 0 20px rgba(0,0,0,0.8);
         }
 
         #bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: contain; background-color: #f0f8ff; pointer-events: none; 
+            object-fit: fill; pointer-events: none; 
         }
 
         #slide { 
@@ -39,11 +44,11 @@
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 鎖定小朋友圖的實際顯示範圍，確保貼合滑梯 */
+        /* 小朋友圖放大 200%（配合滑梯比例） */
         #player { 
-            position: absolute; width: 100px; height: 100px; transform: translate(-50%, -50%); 
+            position: absolute; width: 190px; height: 190px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
-            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
+            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
         }
 
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
@@ -69,13 +74,14 @@
 </div>
 
 <script>
+    // 鎖定標準畫布內的精準座標（捺形彎曲軌跡）
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
         startX: 0.36, startY: 0.53, 
         ctrlX:  0.48, ctrlY:  0.64, 
         endX:   0.61, endY:   0.75, 
         hitRadius: 45,
-        allowedDeviation: 30 
+        allowedDeviation: 35 
     };
 
     let currentLevel = 0, isDragging = false, starsEarned = 0;
