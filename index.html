@@ -6,23 +6,23 @@
     <title>小朋友滑滑梯練運筆:捺</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        body { background-color: #fff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
+        body { background-color: #f0f8ff; display: flex; justify-content: center; align-items: center; height: 100vh; overflow: hidden; font-family: sans-serif; }
         
-        /* 遊戲容器：依裝置大小完整呈現畫面 */
+        /* 遊戲容器：適應各種手機、平板螢幕 */
         #game-container { 
             position: relative; width: 100vw; height: 100vh; max-width: none; max-height: none;
-            background-color: #fff; overflow: hidden; touch-action: none;
+            background-color: #f0f8ff; overflow: hidden; touch-action: none;
         }
 
-        /* 背景層 (11.png)：使用 100% 填滿，確保太陽與雲朵完整見到 */
+        /* 背景層 (11.png)：確保完整顯示，包含太陽與草地 */
         #bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: fill; pointer-events: none; 
+            object-fit: cover; pointer-events: none; 
         }
 
-        /* 滑梯層 (12.png)：完美比例配置於畫面中央偏上 */
+        /* 滑梯層 (12.png)：下移放於畫面中下方 */
         #slide { 
-            position: absolute; width: 55%; left: 22%; top: 25%; 
+            position: absolute; width: 55%; left: 22%; top: 38%; 
             object-fit: contain; pointer-events: none;
         }
 
@@ -39,9 +39,9 @@
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖大小與滑梯視覺比例匹配，剛好在起點準備 */
+        /* 小朋友圖跟隨下移並放大尺寸，與滑梯完美搭配 */
         #player { 
-            position: absolute; width: 100px; height: 100px; transform: translate(-50%, -50%); 
+            position: absolute; width: 120px; height: 120px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
             filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
         }
@@ -69,12 +69,12 @@
 </div>
 
 <script>
-    // 軌跡設定：精準貼合滑梯弧度與比例
+    // 軌跡設定：對齊下移後的滑梯位置與「捺」形弧度
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.35, startY: 0.32, // 滑梯頂部起點
-        ctrlX:  0.47, ctrlY:  0.45, // 配合滑梯弧度的控制點
-        endX:   0.58, endY:   0.57, // 滑梯末端終點
+        startX: 0.35, startY: 0.45, // 下移後的滑梯頂部起點
+        ctrlX:  0.47, ctrlY:  0.58, // 配合滑梯弧度的控制點
+        endX:   0.58, endY:   0.70, // 下移後的滑梯末端終點
         hitRadius: 45,
         allowedDeviation: 30 
     };
