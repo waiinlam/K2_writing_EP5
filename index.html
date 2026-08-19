@@ -27,8 +27,9 @@
             object-fit: fill; pointer-events: none; 
         }
 
+        /* 滑梯圖 (12.png) 位於背景圖下方的綠色草地上 */
         #slide { 
-            position: absolute; width: 55%; left: 22.5%; bottom: 18%; 
+            position: absolute; width: 55%; left: 22.5%; bottom: 8%; 
             object-fit: contain; pointer-events: none;
         }
 
@@ -37,6 +38,7 @@
         #stars-container { position: absolute; top: 20px; left: 20px; font-size: 36px; color: #ddd; z-index: 10; text-shadow: 2px 2px 0 #333; }
         .star-active { color: #FFD700; }
 
+        /* 終點黃色閃爍光圈：對齊滑梯末端出口的草地 */
         #target-glow { 
             position: absolute; width: 55px; height: 55px; border-radius: 50%; 
             background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; 
@@ -44,7 +46,7 @@
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖放大 200%（配合滑梯比例） */
+        /* 小朋友圖放大 200%（精準對應滑梯下移後的頂部起點） */
         #player { 
             position: absolute; width: 190px; height: 190px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
@@ -74,14 +76,14 @@
 </div>
 
 <script>
-    // 鎖定標準畫布內的精準座標（捺形彎曲軌跡）
+    // 運筆路徑座標：起點貼合滑梯頂部，透過微曲的控制點完美吻合滑梯弧度，終點落在滑梯出口草地上
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.36, startY: 0.53, 
-        ctrlX:  0.48, ctrlY:  0.64, 
-        endX:   0.61, endY:   0.75, 
+        startX: 0.36, startY: 0.63, // 滑梯頂部起點
+        ctrlX:  0.48, ctrlY:  0.73, // 微曲的「捺」形弧度控制點，緊貼滑梯滑道
+        endX:   0.61, endY:   0.84, // 滑梯末端草地終點
         hitRadius: 45,
-        allowedDeviation: 35 
+        allowedDeviation: 30 
     };
 
     let currentLevel = 0, isDragging = false, starsEarned = 0;
@@ -109,6 +111,7 @@
         resetPlayer();
     }
 
+    // 繪製順應滑梯弧度、微曲的半透明引導通道
     function drawGuidePath() {
         guideCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
         guideCtx.beginPath();
