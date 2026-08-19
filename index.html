@@ -27,9 +27,9 @@
             object-fit: fill; pointer-events: none; 
         }
 
-        /* 滑梯圖 (12.png) 位於背景圖下方的綠色草地上 */
+        /* 滑梯圖 (12.png) 向下移 10%（bottom 從 8% 改為 -2%） */
         #slide { 
-            position: absolute; width: 55%; left: 22.5%; bottom: 8%; 
+            position: absolute; width: 55%; left: 22.5%; bottom: -2%; 
             object-fit: contain; pointer-events: none;
         }
 
@@ -38,7 +38,7 @@
         #stars-container { position: absolute; top: 20px; left: 20px; font-size: 36px; color: #ddd; z-index: 10; text-shadow: 2px 2px 0 #333; }
         .star-active { color: #FFD700; }
 
-        /* 終點黃色閃爍光圈：對齊滑梯末端出口的草地 */
+        /* 終點黃色閃爍光圈：同步向下移 10% */
         #target-glow { 
             position: absolute; width: 55px; height: 55px; border-radius: 50%; 
             background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; 
@@ -46,7 +46,7 @@
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖放大 200%（精準對應滑梯下移後的頂部起點） */
+        /* 小朋友圖放大 200% */
         #player { 
             position: absolute; width: 190px; height: 190px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
@@ -76,12 +76,12 @@
 </div>
 
 <script>
-    // 運筆路徑座標：起點貼合滑梯頂部，透過微曲的控制點完美吻合滑梯弧度，終點落在滑梯出口草地上
+    // 運筆路徑與起點、控制點、終點全部向下平移 10% (Y軸數值全部 +0.10)
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.36, startY: 0.63, // 滑梯頂部起點
-        ctrlX:  0.48, ctrlY:  0.73, // 微曲的「捺」形弧度控制點，緊貼滑梯滑道
-        endX:   0.61, endY:   0.84, // 滑梯末端草地終點
+        startX: 0.36, startY: 0.73, // 向下移 10%
+        ctrlX:  0.48, ctrlY:  0.83, // 向下移 10%
+        endX:   0.61, endY:   0.94, // 向下移 10%
         hitRadius: 45,
         allowedDeviation: 30 
     };
