@@ -6,33 +6,28 @@
     <title>小朋友滑滑梯練運筆:捺</title>
     <style>
         * { box-sizing: border-box; margin: 0; padding: 0; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none; }
-        body { background-color: #111; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif; }
+        body { background-color: #000; display: flex; justify-content: center; align-items: center; height: 100vh; width: 100vw; overflow: hidden; font-family: sans-serif; }
         
-        /* 全螢幕適應容器，維持穩定座標比例 */
+        /* 鎖定全螢幕容器，防止任何變形或移位 */
         #game-container { 
-            position: relative; 
+            position: absolute; 
+            top: 0; left: 0; 
             width: 100vw; height: 100vh; 
-            max-width: 100vh; max-height: 100vw; /* 避免極端長寬比變形 */
             background-color: #fff; 
             overflow: hidden; 
             touch-action: none;
-            box-shadow: 0 0 20px rgba(0,0,0,0.5);
         }
 
-        /* 背景填滿整個畫面 */
+        /* 背景層 (11.png)：使用 contain 確保完整顯示整張圖（包括天空、太陽、雲朵、草地），絕不裁切 */
         #bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
-            object-fit: cover; pointer-events: none; 
+            object-fit: contain; background-color: #f0f8ff; pointer-events: none; 
         }
 
-        /* 滑梯固定在畫面下方中間 */
+        /* 滑梯層 (12.png)：精準放置在背景下方草地上，比例合宜 */
         #slide { 
-            position: absolute; 
-            width: 50%; 
-            left: 25%; 
-            bottom: 8%; 
-            object-fit: contain; 
-            pointer-events: none;
+            position: absolute; width: 55%; left: 22.5%; bottom: 18%; 
+            object-fit: contain; pointer-events: none;
         }
 
         canvas { position: absolute; top: 0; left: 0; width: 100%; height: 100%; pointer-events: none; }
@@ -40,20 +35,19 @@
         #stars-container { position: absolute; top: 20px; left: 20px; font-size: 36px; color: #ddd; z-index: 10; text-shadow: 2px 2px 0 #333; }
         .star-active { color: #FFD700; }
 
-        /* 終點黃色閃爍光圈 */
+        /* 終點黃色閃爍光圈：位於滑梯出口下方的草地上 */
         #target-glow { 
-            position: absolute; width: 50px; height: 50px; border-radius: 50%; 
+            position: absolute; width: 55px; height: 55px; border-radius: 50%; 
             background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; 
             transform: translate(-50%, -50%); animation: pulse 1s infinite alternate; z-index: 5; 
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖案：尺寸透過 JS 動態設定為滑梯寬度的 20% */
+        /* 小朋友圖：大小與滑梯視覺比例完美配合，剛好貼在滑梯頂端 */
         #player { 
-            position: absolute; 
-            transform: translate(-50%, -50%); 
+            position: absolute; width: 95px; height: 95px; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
-            filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
+            filter: drop-shadow(0 4px 6px rgba(0,0,0,0.25));
         }
 
         #overlay { position: absolute; top: 0; left: 0; width: 100%; height: 100%; background: rgba(255, 255, 255, 0.9); display: flex; flex-direction: column; justify-content: center; align-items: center; z-index: 50; opacity: 0; pointer-events: none; transition: opacity 0.5s; }
@@ -79,20 +73,18 @@
 </div>
 
 <script>
-    // 依據「滑梯置中底下」所規劃的相對比例座標（範圍 0 ~ 1）
+    // 嚴格對齊滑梯弧度的「捺」字流暢彎曲軌跡設定
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        // 修正後的滑梯「捺」形軌跡（起點在滑梯頂部淺橙色處，向右下彎弧）
-        startX: 0.38, startY: 0.52, 
-        ctrlX:  0.48, ctrlY:  0.64, 
-        endX:   0.61, endY:   0.76, 
+        startX: 0.36, startY: 0.53, // 滑梯頂部起點（精準貼住滑梯欄杆）
+        ctrlX:  0.48, ctrlY:  0.64, // 完美的中文「捺」字下彎弧度控制點
+        endX:   0.61, endY:   0.75, // 滑梯末端草地終點
         hitRadius: 45,
-        allowedDeviation: 35 
+        allowedDeviation: 30 
     };
 
     let currentLevel = 0, isDragging = false, starsEarned = 0;
     const container = document.getElementById('game-container');
-    const slideImg = document.getElementById('slide');
     const guideCanvas = document.getElementById('guide-canvas'), drawCanvas = document.getElementById('draw-canvas');
     const guideCtx = guideCanvas.getContext('2d'), drawCtx = drawCanvas.getContext('2d');
     const player = document.getElementById('player'), targetGlow = document.getElementById('target-glow');
@@ -101,21 +93,13 @@
     let startPx = {x: 0, y: 0}, ctrlPx = {x: 0, y: 0}, endPx = {x: 0, y: 0};
     
     function resizeAndInit() {
-        // 動態適應容器大小，解決平板直橫向切換移位問題
         const rect = container.getBoundingClientRect();
         guideCanvas.width = rect.width; guideCanvas.height = rect.height;
         drawCanvas.width = rect.width; drawCanvas.height = rect.height;
         
-        // 計算實際像素座標
         startPx = {x: rect.width * config.startX, y: rect.height * config.startY};
         ctrlPx  = {x: rect.width * config.ctrlX,  y: rect.height * config.ctrlY};
         endPx   = {x: rect.width * config.endX,   y: rect.height * config.endY};
-
-        // 設定小孩尺寸為滑梯寬度的 20%
-        const slideRect = slideImg.getBoundingClientRect();
-        const playerSize = slideRect.width * 0.2;
-        player.style.width = `${playerSize}px`;
-        player.style.height = `${playerSize}px`;
 
         targetGlow.style.left = `${endPx.x}px`;
         targetGlow.style.top = `${endPx.y}px`;
@@ -124,13 +108,14 @@
         resetPlayer();
     }
 
+    // 繪製呈優美「捺」字彎曲弧度的半透明引導線
     function drawGuidePath() {
         guideCtx.clearRect(0, 0, guideCanvas.width, guideCanvas.height);
         guideCtx.beginPath();
         guideCtx.moveTo(startPx.x, startPx.y);
         guideCtx.quadraticCurveTo(ctrlPx.x, ctrlPx.y, endPx.x, endPx.y);
-        guideCtx.strokeStyle = 'rgba(255, 165, 0, 0.45)'; // 配合淺橙色通道
-        guideCtx.lineWidth = 40; 
+        guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.65)';
+        guideCtx.lineWidth = 42; 
         guideCtx.lineCap = 'round';
         guideCtx.stroke();
     }
@@ -151,6 +136,7 @@
         starsContainer.innerHTML = Array(5).fill(0).map((_, i) => i < starsEarned ? '<span class="star-active">★</span> ' : '<span>★</span> ').join('');
     }
 
+    // 計算點到二次貝茲曲線距離（確保運筆必須沿著「捺」的彎曲通道）
     function getDistanceFromCurve(px, py, p0, p1, p2) {
         let minDistSq = Infinity;
         for (let i = 0; i <= 50; i++) {
@@ -228,12 +214,7 @@
 
     replayBtn.addEventListener('click', () => { location.reload(); });
     window.addEventListener('resize', resizeAndInit);
-    window.onload = () => { 
-        // 確保圖片載入完成後才抓取正確尺寸初始化
-        setTimeout(resizeAndInit, 50);
-        updateStars(); 
-        loadLevel(); 
-    };
+    window.onload = () => { resizeAndInit(); updateStars(); loadLevel(); };
 </script>
 </body>
 </html>
