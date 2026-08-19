@@ -13,15 +13,15 @@
             background-color: #f0f8ff; overflow: hidden; touch-action: none;
         }
 
-        /* 背景層 (11.png)：完整顯示，包含天空、太陽與雲朵 */
+        /* 背景層 (11.png)：完整顯示背景 */
         #bg { 
             position: absolute; top: 0; left: 0; width: 100%; height: 100%; 
             object-fit: cover; pointer-events: none; 
         }
 
-        /* 滑梯層 (12.png)：下移至草地上並放大 1.5 倍 */
+        /* 滑梯層 (12.png)：寬度佔整體背景寬度的 80%，靠下方置中 */
         #slide { 
-            position: absolute; width: 65%; left: 17%; top: 42%; 
+            position: absolute; width: 80%; left: 10%; bottom: 8%; 
             object-fit: contain; pointer-events: none;
         }
 
@@ -30,17 +30,17 @@
         #stars-container { position: absolute; top: 20px; left: 20px; font-size: 40px; color: #ddd; z-index: 10; text-shadow: 2px 2px 0 #333; }
         .star-active { color: #FFD700; }
 
-        /* 終點黃色閃爍光圈 */
+        /* 終點黃色閃爍光圈（移至滑梯出口下方的草地上） */
         #target-glow { 
-            position: absolute; width: 55px; height: 55px; border-radius: 50%; 
+            position: absolute; width: 60px; height: 60px; border-radius: 50%; 
             background: rgba(255, 215, 0, 0.5); border: 4px solid #FFD700; 
             transform: translate(-50%, -50%); animation: pulse 1s infinite alternate; z-index: 5; 
         }
         @keyframes pulse { 0% { transform: translate(-50%, -50%) scale(0.8); opacity: 0.6; } 100% { transform: translate(-50%, -50%) scale(1.2); opacity: 1; } }
         
-        /* 小朋友圖放大 2 倍，貼合滑梯頂部起點 */
+        /* 小朋友圖：寬度佔整體背景寬度的 25%，保持原比例 */
         #player { 
-            position: absolute; width: 100px; height: 100px; transform: translate(-50%, -50%); 
+            position: absolute; width: 25vw; height: auto; transform: translate(-50%, -50%); 
             cursor: grab; z-index: 20; touch-action: none; object-fit: contain;
             filter: drop-shadow(0 6px 8px rgba(0,0,0,0.25));
         }
@@ -68,14 +68,14 @@
 </div>
 
 <script>
-    // 軌跡設定：調整起點、較斜的控制點弧度與終點，精準貼合滑梯
+    // 軌跡設定：完美配合 80% 寬度滑梯，起點在頂部，終點延伸至滑梯出口下方的草地上
     const config = {
         levels: ['boy.png', 'girl.png', 'boy.png', 'girl.png', 'boy.png'],
-        startX: 0.35, startY: 0.49, // 貼合下移後滑梯頂部的起點
-        ctrlX:  0.46, ctrlY:  0.61, // 調整弧度更斜、更精準貼合滑道
-        endX:   0.58, endY:   0.72, // 滑梯末端終點
-        hitRadius: 45,
-        allowedDeviation: 28 
+        startX: 0.32, startY: 0.42, // 滑梯頂部起點
+        ctrlX:  0.48, ctrlY:  0.60, // 完美的「捺」形弧線控制點
+        endX:   0.65, endY:   0.82, // 延伸至滑梯出口草地上的終點
+        hitRadius: 50,
+        allowedDeviation: 35 
     };
 
     let currentLevel = 0, isDragging = false, starsEarned = 0;
@@ -109,7 +109,7 @@
         guideCtx.moveTo(startPx.x, startPx.y);
         guideCtx.quadraticCurveTo(ctrlPx.x, ctrlPx.y, endPx.x, endPx.y);
         guideCtx.strokeStyle = 'rgba(255, 255, 255, 0.6)';
-        guideCtx.lineWidth = 42; 
+        guideCtx.lineWidth = 45; 
         guideCtx.lineCap = 'round';
         guideCtx.stroke();
     }
@@ -169,7 +169,7 @@
 
         drawCtx.lineTo(curX, curY);
         drawCtx.strokeStyle = '#FF5722'; 
-        drawCtx.lineWidth = 14; 
+        drawCtx.lineWidth = 16; 
         drawCtx.lineCap = 'round';
         drawCtx.lineJoin = 'round';
         drawCtx.stroke();
@@ -211,3 +211,4 @@
 </script>
 </body>
 </html>
+
